@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SPA Interattiva TFM: Calcolatore Vantaggi</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Visualization & Content Choices:
+        - Introduzione al TFM: Testo esplicativo. Goal: Informare.
+        - Condizioni Chiave: Lista puntata con icone (Unicode/HTML+CSS). Goal: Informare.
+        - Vantaggi Società/Amministratore: Testo con esempi numerici. Goal: Informare, Confrontare.
+        - Esempio Pratico: Testo, numeri fissi. Grafico a torta (Chart.js) per ripartizione risparmio; Grafico a barre (Chart.js) per confronto imposte amministratore. Goal: Illustrare, Confrontare. Interaction: Static view.
+        - Simulatore TFM Interattivo: Input fields (HTML), JS per calcoli. Output testuali dinamici. Grafico a torta e a barre (Chart.js) aggiornati dinamicamente. Goal: Esplorare, Personalizzare. Interaction: User input, dynamic updates.
+        - Conclusioni: Testo riassuntivo. Goal: Riassumere.
+        - Library/Method: HTML, Tailwind CSS, Vanilla JS, Chart.js (Canvas).
+        - Justification: Chart.js for standard, responsive charts. Vanilla JS for direct DOM manipulation and calculations, suitable for this SPA's complexity. Tailwind for rapid, responsive UI development. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9; /* slate-100 */
+            color: #1e293b; /* slate-800 */
+            scroll-behavior: smooth;
+        }
+        .sticky-nav {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+        .nav-link {
+            transition: color 0.3s ease;
+        }
+        .nav-link:hover {
+            color: #0284c7; /* sky-600 */
+        }
+        .section-title {
+            color: #0f172a; /* slate-900 */
+            border-bottom: 2px solid #0ea5e9; /* sky-500 */
+            padding-bottom: 0.5rem;
+        }
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1);
+        }
+        .icon-placeholder {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 0.75rem;
+            color: #0284c7; /* sky-600 */
+            background-color: #e0f2fe; /* sky-100 */
+        }
+        .input-field {
+            border-color: #cbd5e1; /* slate-300 */
+        }
+        .input-field:focus {
+            border-color: #0ea5e9; /* sky-500 */
+            box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+            outline: none;
+        }
+        .btn-primary {
+            background-color: #0ea5e9; /* sky-500 */
+            color: white;
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #0284c7; /* sky-600 */
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px; /* Default max-width */
+            margin-left: auto;
+            margin-right: auto;
+            height: 300px; /* Base height */
+            max-height: 400px; /* Max height */
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px; /* Taller on medium screens */
+            }
+        }
+        .result-highlight {
+            color: #0ea5e9; /* sky-500 */
+            font-weight: 600;
+        }
+        .footer {
+            background-color: #0f172a; /* slate-900 */
+            color: #e2e8f0; /* slate-300 */
+        }
+    </style>
+</head>
+<body>
+    <nav class="sticky-nav shadow-md">
+        <div class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <a href="#" class="text-2xl font-bold text-sky-600">TFM Interattivo</a>
+            <div class="space-x-4">
+                <a href="#introduzione" class="nav-link text-slate-700">Introduzione</a>
+                <a href="#condizioni" class="nav-link text-slate-700">Condizioni</a>
+                <a href="#vantaggi" class="nav-link text-slate-700">Vantaggi</a>
+                <a href="#esempio" class="nav-link text-slate-700">Esempio</a>
+                <a href="#simulatore" class="nav-link text-slate-700">Simulatore</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto px-6 py-12">
+        <section id="introduzione" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Introduzione al TFM</h2>
+            <div class="card p-8">
+                <p class="text-lg leading-relaxed mb-4">
+                    Benvenuto nella nostra applicazione interattiva dedicata al Trattamento di Fine Mandato (TFM). Questa pagina è progettata per offrirti una panoramica chiara e completa su cos'è il TFM, quali sono le condizioni per la sua applicazione e, soprattutto, quali vantaggi fiscali può generare sia per la società che per l'amministratore.
+                </p>
+                <p class="text-lg leading-relaxed">
+                    Il TFM è una somma che l'azienda accantona annualmente per il suo amministratore e che viene erogata alla fine del suo mandato. Se gestito correttamente, può rappresentare un'importante leva di ottimizzazione fiscale. Esplora le sezioni seguenti per approfondire e utilizza il nostro simulatore per calcolare i benefici specifici per la tua situazione.
+                </p>
+            </div>
+        </section>
+
+        <section id="condizioni" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Condizioni Chiave del TFM</h2>
+            <div class="card p-8">
+                <p class="text-lg leading-relaxed mb-6">Per beneficiare appieno dei vantaggi fiscali, il Trattamento di Fine Mandato deve rispettare rigorose condizioni normative. La mancata osservanza di questi requisiti può compromettere la deducibilità per la società e il regime di tassazione agevolata per l'amministratore. Ecco i punti fondamentali:</p>
+                <ul class="space-y-6">
+                    <li class="flex items-start">
+                        <span class="icon-placeholder">📜</span>
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-700">1. Formalizzazione Preventiva</h3>
+                            <p class="text-slate-600 mt-1">Il TFM deve essere previsto esplicitamente dallo **Statuto** societario oppure da una **Delibera Assembleare** con data certa e *antecedente all'inizio del mandato* dell'amministratore. Questa formalizzazione è cruciale per la deducibilità fiscale del costo per la società.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="icon-placeholder">💰</span>
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-700">2. Accantonamento Effettivo</h3>
+                            <p class="text-slate-600 mt-1">L'azienda deve **effettivamente accantonare** l'importo destinato al TFM nei propri bilanci annuali. La semplice previsione statutaria non è sufficiente; è necessario che l'accantonamento sia reale e tracciabile contabilmente.</p>
+                        </div>
+                    </li>
+                    <li class="flex items-start">
+                        <span class="icon-placeholder">🤝</span>
+                        <div>
+                            <h3 class="text-xl font-semibold text-slate-700">3. Pagamento a Fine Mandato</h3>
+                            <p class="text-slate-600 mt-1">L'erogazione del TFM deve avvenire **esclusivamente alla conclusione del mandato** dell'amministratore. Pagamenti effettuati durante il mandato potrebbero essere interpretati diversamente dal fisco, compromettendo i benefici della tassazione separata per l'amministratore.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="vantaggi" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Vantaggi Fiscali del TFM</h2>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="card p-8">
+                    <h3 class="text-2xl font-semibold text-sky-600 mb-4">Per la Società</h3>
+                    <p class="text-lg leading-relaxed mb-4">Il TFM offre significativi vantaggi fiscali per l'impresa, contribuendo a ridurre l'onere impositivo e a migliorare la pianificazione finanziaria.</p>
+                    <ul class="space-y-3 list-disc list-inside text-slate-600">
+                        <li>
+                            <span class="font-semibold">Deducibilità Fiscale Totale:</span> L'importo accantonato annualmente per il TFM è interamente deducibile dal reddito d'impresa. Questo riduce l'utile imponibile e, di conseguenza, l'IRES dovuta.
+                            <br><span class="text-sm italic">Esempio: Accantonando €10.000/anno, con IRES al 24%, la società risparmia €2.400 di tasse all'anno.</span>
+                        </li>
+                        <li>
+                            <span class="font-semibold">Nessun Contributo Previdenziale:</span> A differenza dei compensi ordinari, sul TFM accantonato non sono dovuti contributi INPS. Il costo per l'azienda è quindi l'importo lordo accantonato, senza ulteriori oneri sociali.
+                        </li>
+                    </ul>
+                </div>
+                <div class="card p-8">
+                    <h3 class="text-2xl font-semibold text-sky-600 mb-4">Per l'Amministratore</h3>
+                    <p class="text-lg leading-relaxed mb-4">Anche per l'amministratore, il TFM rappresenta una forma di compenso fiscalmente vantaggiosa, specialmente al momento dell'incasso.</p>
+                    <ul class="space-y-3 list-disc list-inside text-slate-600">
+                        <li>
+                            <span class="font-semibold">Tassazione Separata (Art. 17 TUIR):</span> Al momento dell'incasso (fine mandato), il TFM può beneficiare della tassazione separata. L'aliquota applicata è generalmente più bassa rispetto all'IRPEF marginale ordinaria (spesso tra il 15% e il 23%), calcolata sulla media dei redditi dei 5 anni precedenti.
+                        </li>
+                        <li>
+                            <span class="font-semibold">Differimento d'Imposta:</span> L'amministratore paga le imposte sul TFM solo al momento dell'effettivo incasso, ossia alla fine del mandato. Questo comporta un vantaggio finanziario, poiché la tassazione è posticipata.
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <section id="esempio" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Esempio Pratico</h2>
+            <div class="card p-8">
+                <p class="text-lg leading-relaxed mb-6">Per illustrare concretamente i benefici, consideriamo un esempio numerico. Questi calcoli mostrano come il TFM possa generare un risparmio fiscale tangibile sia per la società che per l'amministratore, basandosi su parametri comuni.</p>
+                <div class="bg-slate-50 p-6 rounded-lg mb-6 border border-slate-200">
+                    <h4 class="text-xl font-semibold text-slate-700 mb-3">Dati dell'Esempio:</h4>
+                    <ul class="list-disc list-inside text-slate-600 space-y-1">
+                        <li>Compenso Annuo Amministratore: €50.000</li>
+                        <li>Accantonamento Annuo TFM: €10.000</li>
+                        <li>Anni di Mandato: 10 anni (Totale TFM Accantonato: €100.000)</li>
+                        <li>Aliquota IRES (Società): 24%</li>
+                        <li>Aliquota IRPEF Marginale Ordinaria (Amministratore): 38%</li>
+                        <li>Aliquota Tassazione Separata TFM (Amministratore): 20%</li>
+                    </ul>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mb-8">
+                    <div>
+                        <h4 class="text-xl font-semibold text-slate-700 mb-3">Risultati per la Società:</h4>
+                        <p class="text-slate-600">Deduzione totale: €100.000</p>
+                        <p class="text-slate-600">Tasse risparmiate (24% IRES): <span class="result-highlight">€24.000</span></p>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-semibold text-slate-700 mb-3">Risultati per l'Amministratore:</h4>
+                        <p class="text-slate-600">TFM Incassato: €100.000</p>
+                        <p class="text-slate-600">Imposte con Tassazione Separata (20%): €20.000</p>
+                        <p class="text-slate-600">Imposte con IRPEF Ordinaria (38%): €38.000</p>
+                        <p class="text-slate-600">Risparmio fiscale Amministratore: <span class="result-highlight">€18.000</span></p>
+                    </div>
+                </div>
+                <div class="text-center bg-sky-50 p-6 rounded-lg border border-sky-200">
+                    <h4 class="text-2xl font-bold text-sky-700">Risparmio Fiscale Complessivo (Società + Amministratore):</h4>
+                    <p class="text-4xl font-bold text-sky-600 mt-2">€42.000</p>
+                </div>
+
+                <div class="grid md:grid-cols-2 gap-8 mt-10">
+                    <div class="chart-container">
+                        <canvas id="esempioRisparmioChart"></canvas>
+                        <p class="text-center text-sm text-slate-500 mt-2">Ripartizione Risparmio Fiscale Complessivo</p>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="esempioImposteAmmChart"></canvas>
+                        <p class="text-center text-sm text-slate-500 mt-2">Confronto Imposte Amministratore</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="simulatore" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Simulatore TFM Interattivo</h2>
+            <div class="card p-8">
+                <p class="text-lg leading-relaxed mb-6">Utilizza questo simulatore per calcolare i potenziali vantaggi fiscali del TFM in base ai tuoi dati specifici. Inserisci i valori richiesti e osserva come cambiano i risultati. Questo strumento ti aiuterà a comprendere meglio l'impatto del TFM sulla tua situazione finanziaria e fiscale.</p>
+                <div class="grid md:grid-cols-2 gap-x-8 gap-y-6 mb-8">
+                    <div>
+                        <label for="sim_acc_annuo" class="block text-sm font-medium text-slate-700 mb-1">Accantonamento Annuo TFM (€)</label>
+                        <input type="number" id="sim_acc_annuo" value="10000" class="input-field mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm focus:outline-none sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="sim_anni" class="block text-sm font-medium text-slate-700 mb-1">Anni di Mandato</label>
+                        <input type="number" id="sim_anni" value="10" class="input-field mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm focus:outline-none sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="sim_ires" class="block text-sm font-medium text-slate-700 mb-1">Aliquota IRES Società (%)</label>
+                        <input type="number" id="sim_ires" value="24" step="0.1" class="input-field mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm focus:outline-none sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="sim_irpef_ord" class="block text-sm font-medium text-slate-700 mb-1">Aliquota IRPEF Ordinaria Amm. (%)</label>
+                        <input type="number" id="sim_irpef_ord" value="38" step="0.1" class="input-field mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm focus:outline-none sm:text-sm">
+                    </div>
+                    <div>
+                        <label for="sim_tass_sep" class="block text-sm font-medium text-slate-700 mb-1">Aliquota Tassazione Separata TFM (%)</label>
+                        <input type="number" id="sim_tass_sep" value="20" step="0.1" class="input-field mt-1 block w-full px-3 py-2 bg-white border rounded-md shadow-sm focus:outline-none sm:text-sm">
+                    </div>
+                </div>
+                <div class="text-center mb-10">
+                    <button id="calcola_simulatore" class="btn-primary font-semibold py-3 px-8 rounded-lg shadow-md">Calcola Vantaggi</button>
+                </div>
+
+                <div id="risultati_simulatore" class="hidden">
+                    <h3 class="text-2xl font-semibold text-slate-800 mb-6 text-center">Risultati della Simulazione:</h3>
+                    <div class="grid md:grid-cols-2 gap-8 mb-8">
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h4 class="text-xl font-semibold text-slate-700 mb-3">Per la Società:</h4>
+                            <p class="text-slate-600">Accantonamento Totale TFM: <span id="sim_out_acc_totale" class="result-highlight"></span></p>
+                            <p class="text-slate-600">Risparmio IRES Totale: <span id="sim_out_risp_ires" class="result-highlight"></span></p>
+                        </div>
+                        <div class="bg-slate-50 p-6 rounded-lg border border-slate-200">
+                            <h4 class="text-xl font-semibold text-slate-700 mb-3">Per l'Amministratore:</h4>
+                            <p class="text-slate-600">TFM Lordo Incassato: <span id="sim_out_tfm_lordo" class="result-highlight"></span></p>
+                            <p class="text-slate-600">Imposte con Tass. Separata: <span id="sim_out_imp_sep" class="result-highlight"></span></p>
+                            <p class="text-slate-600">Imposte con IRPEF Ordinaria: <span id="sim_out_imp_ord" class="result-highlight"></span></p>
+                            <p class="text-slate-600">Risparmio Fiscale Amministratore: <span id="sim_out_risp_amm" class="result-highlight"></span></p>
+                        </div>
+                    </div>
+                    <div class="text-center bg-sky-50 p-6 rounded-lg border border-sky-200">
+                        <h4 class="text-2xl font-bold text-sky-700">Risparmio Fiscale Complessivo Stimato:</h4>
+                        <p id="sim_out_risp_totale" class="text-4xl font-bold text-sky-600 mt-2"></p>
+                    </div>
+                     <div class="grid md:grid-cols-2 gap-8 mt-10">
+                        <div class="chart-container">
+                            <canvas id="simulatoreRisparmioChart"></canvas>
+                             <p class="text-center text-sm text-slate-500 mt-2">Ripartizione Risparmio Fiscale (Simulato)</p>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="simulatoreImposteAmmChart"></canvas>
+                            <p class="text-center text-sm text-slate-500 mt-2">Confronto Imposte Amministratore (Simulato)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+         <section id="conclusioni" class="mb-16">
+            <h2 class="section-title text-3xl font-bold mb-8">Conclusioni</h2>
+            <div class="card p-8">
+                <p class="text-lg leading-relaxed mb-4">
+                    Il Trattamento di Fine Mandato, se pianificato e attuato correttamente, rappresenta una leva fiscale di notevole importanza sia per le società che per i loro amministratori. Come abbiamo visto, i benefici derivano dalla deducibilità del costo per l'impresa e da un regime di tassazione agevolata per il percipiente.
+                </p>
+                <p class="text-lg leading-relaxed mb-4">
+                    È fondamentale, tuttavia, prestare la massima attenzione al rispetto delle condizioni formali e sostanziali richieste dalla normativa, come la previsione statutaria o deliberativa antecedente, l'effettivo accantonamento e il pagamento al termine del mandato.
+                </p>
+                <p class="text-lg leading-relaxed">
+                    Speriamo che questa applicazione interattiva e il simulatore ti siano stati utili per comprendere meglio le potenzialità del TFM. Per una consulenza personalizzata e per analizzare la tua specifica situazione, ti consigliamo di rivolgerti a un professionista qualificato.
+                </p>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer py-8 text-center">
+        <p>&copy; <span id="currentYear"></span> Applicazione Interattiva TFM. Tutti i diritti riservati.</p>
+        <p class="text-sm mt-1">Le informazioni qui presentate hanno scopo puramente illustrativo e non costituiscono consulenza fiscale.</p>
+    </footer>
+
+    <script>
+        document.getElementById('currentYear').textContent = new Date().getFullYear();
+
+        let esempioRisparmioChartInstance = null;
+        let esempioImposteAmmChartInstance = null;
+        let simulatoreRisparmioChartInstance = null;
+        let simulatoreImposteAmmChartInstance = null;
+
+        function createOrUpdatePieChart(canvasId, chartInstance, labels, data, title) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = data;
+                chartInstance.update();
+                return chartInstance;
+            }
+            return new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: title,
+                        data: data,
+                        backgroundColor: ['#38bdf8', '#fbbf24'], // sky-400, amber-400
+                        borderColor: ['#0ea5e9', '#f59e0b'], // sky-500, amber-500
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed !== null) {
+                                        label += new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(context.parsed);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createOrUpdateBarChart(canvasId, chartInstance, labels, data1, data2, label1, label2, title) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstance) {
+                chartInstance.data.labels = labels;
+                chartInstance.data.datasets[0].data = data1;
+                chartInstance.data.datasets[1].data = data2;
+                chartInstance.update();
+                return chartInstance;
+            }
+            return new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: label1,
+                        data: data1,
+                        backgroundColor: '#7dd3fc', // sky-300
+                        borderColor: '#38bdf8', // sky-400
+                        borderWidth: 1
+                    }, {
+                        label: label2,
+                        data: data2,
+                        backgroundColor: '#fca5a5', // red-300
+                        borderColor: '#f87171', // red-400
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(value);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' }).format(context.parsed.y);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Grafici per la sezione Esempio Pratico
+        const risparmioSocietaEsempio = 24000;
+        const risparmioAmmEsempio = 18000;
+        esempioRisparmioChartInstance = createOrUpdatePieChart(
+            'esempioRisparmioChart',
+            esempioRisparmioChartInstance,
+            ['Risparmio Società', 'Risparmio Amministratore'],
+            [risparmioSocietaEsempio, risparmioAmmEsempio],
+            'Ripartizione Risparmio Fiscale Esempio'
+        );
+
+        const imposteTassSeparataEsempio = 20000;
+        const imposteIrpefOrdinariaEsempio = 38000;
+        esempioImposteAmmChartInstance = createOrUpdateBarChart(
+            'esempioImposteAmmChart',
+            esempioImposteAmmChartInstance,
+            ['Amministratore'],
+            [imposteTassSeparataEsempio],
+            [imposteIrpefOrdinariaEsempio],
+            'Imposte Tass. Separata',
+            'Imposte IRPEF Ordinaria',
+            'Confronto Imposte Amministratore Esempio'
+        );
+
+
+        // Logica del Simulatore
+        const btnCalcolaSimulatore = document.getElementById('calcola_simulatore');
+        const risultatiDiv = document.getElementById('risultati_simulatore');
+
+        btnCalcolaSimulatore.addEventListener('click', function() {
+            const accAnnuo = parseFloat(document.getElementById('sim_acc_annuo').value) || 0;
+            const anni = parseInt(document.getElementById('sim_anni').value) || 0;
+            const aliquotaIRES = (parseFloat(document.getElementById('sim_ires').value) || 0) / 100;
+            const aliquotaIRPEFOrd = (parseFloat(document.getElementById('sim_irpef_ord').value) || 0) / 100;
+            const aliquotaTassSep = (parseFloat(document.getElementById('sim_tass_sep').value) || 0) / 100;
+
+            if (accAnnuo <= 0 || anni <= 0 || aliquotaIRES <= 0 || aliquotaIRPEFOrd <= 0 || aliquotaTassSep < 0) {
+                alert("Per favore, inserisci valori validi e positivi per tutti i campi (l'aliquota di tassazione separata può essere zero).");
+                return;
+            }
+            
+            const accTotale = accAnnuo * anni;
+            const rispIRES = accTotale * aliquotaIRES;
+
+            const tfmLordoAmm = accTotale;
+            const impSepAmm = tfmLordoAmm * aliquotaTassSep;
+            const impOrdAmm = tfmLordoAmm * aliquotaIRPEFOrd;
+            const rispAmm = impOrdAmm - impSepAmm;
+
+            const rispTotale = rispIRES + rispAmm;
+
+            document.getElementById('sim_out_acc_totale').textContent = `€${accTotale.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_risp_ires').textContent = `€${rispIRES.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_tfm_lordo').textContent = `€${tfmLordoAmm.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_imp_sep').textContent = `€${impSepAmm.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_imp_ord').textContent = `€${impOrdAmm.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_risp_amm').textContent = `€${rispAmm.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            document.getElementById('sim_out_risp_totale').textContent = `€${rispTotale.toLocaleString('it-IT', {minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+            risultatiDiv.classList.remove('hidden');
+            
+            simulatoreRisparmioChartInstance = createOrUpdatePieChart(
+                'simulatoreRisparmioChart',
+                simulatoreRisparmioChartInstance,
+                ['Risparmio Società', 'Risparmio Amministratore'],
+                [rispIRES, rispAmm],
+                'Ripartizione Risparmio Fiscale (Simulato)'
+            );
+
+            simulatoreImposteAmmChartInstance = createOrUpdateBarChart(
+                'simulatoreImposteAmmChart',
+                simulatoreImposteAmmChartInstance,
+                ['Amministratore'],
+                [impSepAmm],
+                [impOrdAmm],
+                'Imposte Tass. Separata',
+                'Imposte IRPEF Ordinaria',
+                'Confronto Imposte Amministratore (Simulato)'
+            );
+
+            // Scroll to results
+            risultatiDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    const offsetTop = targetElement.offsetTop - 80; // Adjust for sticky nav height
+                     window.scrollTo({
+                        top: offsetTop,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>
